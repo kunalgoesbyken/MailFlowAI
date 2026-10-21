@@ -152,7 +152,7 @@ function AuthCallbackContent() {
   if (status === 'error') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 px-4">
-        <div className="max-w-md w-full bg-white dark:bg-neutral-900 rounded-lg shadow-lg p-8">
+        <div className="max-w-md w-full bg-white dark:bg-neutral-900 rounded-lg p-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
               <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -174,7 +174,7 @@ function AuthCallbackContent() {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => router.replace('/')}
-              className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-md hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors font-medium"
+              className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-md hover:bg-neutral-800 dark:hover:bg-neutral-200 font-medium"
             >
               Go to Home
             </button>
@@ -183,7 +183,7 @@ function AuthCallbackContent() {
                 sessionStorage.clear();
                 router.replace('/');
               }}
-              className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-md hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors font-medium"
+              className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-md hover:bg-neutral-50 dark:hover:bg-neutral-800 font-medium"
             >
               Try Again
             </button>

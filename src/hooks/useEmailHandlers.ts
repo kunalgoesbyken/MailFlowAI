@@ -76,6 +76,7 @@ export function useEmailHandlers() {
       subject: data.subject,
       body: data.body,
       cc: data.cc ? [data.cc] : undefined,
+      bcc: data.bcc ? [data.bcc] : undefined,
     });
   }, [sendEmail]);
 

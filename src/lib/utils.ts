@@ -59,26 +59,24 @@ export function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export function getAvatarColor(email: string): string {
-  const gradients = [
-    'bg-gradient-to-br from-violet-500 to-purple-600',
-    'bg-gradient-to-br from-blue-500 to-cyan-500',
-    'bg-gradient-to-br from-emerald-500 to-teal-500',
-    'bg-gradient-to-br from-orange-500 to-amber-500',
-    'bg-gradient-to-br from-pink-500 to-rose-500',
-    'bg-gradient-to-br from-indigo-500 to-blue-600',
-    'bg-gradient-to-br from-red-500 to-orange-500',
-    'bg-gradient-to-br from-teal-500 to-emerald-500',
-    'bg-gradient-to-br from-purple-500 to-pink-500',
-    'bg-gradient-to-br from-cyan-500 to-blue-500',
-  ];
+const AVATAR_COLORS = [
+  'bg-blue-600',
+  'bg-emerald-600',
+  'bg-orange-600',
+  'bg-rose-600',
+  'bg-indigo-600',
+  'bg-teal-600',
+  'bg-amber-600',
+  'bg-cyan-700',
+];
 
+export function getAvatarColor(email: string): string {
   let hash = 0;
   for (let i = 0; i < email.length; i++) {
     hash = email.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  return gradients[Math.abs(hash) % gradients.length];
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 export function isWithinLastDays(date: Date, days: number): boolean {

@@ -47,10 +47,10 @@ function DefaultErrorFallback({
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 p-4">
-      <div className="max-w-lg w-full bg-white dark:bg-neutral-900 rounded-2xl shadow-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+      <div className="max-w-lg w-full bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
         {/* Header with icon */}
-        <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 px-6 py-8 border-b border-neutral-200 dark:border-neutral-800">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-red-100 dark:bg-red-900/50 flex items-center justify-center mb-4">
+        <div className="px-6 py-8 border-b border-neutral-200 dark:border-neutral-800">
+          <div className="w-16 h-16 mx-auto rounded-lg bg-red-100 dark:bg-red-900/50 flex items-center justify-center mb-4">
             <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
           <h1 className="text-xl font-semibold text-neutral-900 dark:text-white text-center">
@@ -67,7 +67,7 @@ function DefaultErrorFallback({
         {isDevelopment && error && (
           <div className="px-6 py-4 bg-neutral-100 dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-800">
             <details className="group">
-              <summary className="flex items-center gap-2 text-xs font-medium text-neutral-700 dark:text-neutral-300 cursor-pointer hover:text-neutral-900 dark:hover:text-white transition-colors">
+              <summary className="flex items-center gap-2 text-xs font-medium text-neutral-700 dark:text-neutral-300 cursor-pointer hover:text-neutral-900 dark:hover:text-white">
                 <Bug className="w-3.5 h-3.5" />
                 <span>View error details (development)</span>
               </summary>
@@ -91,7 +91,7 @@ function DefaultErrorFallback({
         <div className="px-6 py-5 flex items-center gap-3">
           <Button
             onClick={onReset}
-            className="flex-1 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200"
+            className="flex-1"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Try Again
@@ -99,7 +99,7 @@ function DefaultErrorFallback({
           <Button
             onClick={onGoHome}
             variant="outline"
-            className="flex-1 border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            className="flex-1"
           >
             <Home className="w-4 h-4 mr-2" />
             Go Home
@@ -128,7 +128,7 @@ function InlineErrorFallback({
   onReset: () => void;
 }) {
   return (
-    <div className="flex items-center justify-center p-6 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-xl">
+    <div className="flex items-center justify-center p-6 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg">
       <div className="text-center">
         <div className="w-10 h-10 mx-auto rounded-lg bg-red-100 dark:bg-red-900/50 flex items-center justify-center mb-3">
           <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />

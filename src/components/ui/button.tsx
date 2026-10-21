@@ -5,25 +5,20 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 border border-transparent",
-        destructive:
-          "bg-red-600 text-white hover:bg-red-700 border border-transparent dark:bg-red-600 dark:hover:bg-red-700",
+        default: "bg-accent-600 text-white hover:bg-accent-700",
+        destructive: "bg-error text-white hover:bg-red-700",
         outline:
-          "border border-neutral-300 bg-transparent hover:bg-neutral-50 hover:border-neutral-400 dark:border-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-300 text-neutral-700",
-        secondary:
-          "bg-neutral-100 text-neutral-900 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700 border border-transparent",
-        ghost: "hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400",
-        link: "text-neutral-900 underline-offset-4 hover:underline",
+          "border border-neutral-200 hover:bg-neutral-100 dark:border-neutral-800 dark:hover:bg-neutral-800",
+        ghost: "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800",
       },
       size: {
         default: "h-9 px-4",
         sm: "h-8 px-3 text-xs",
-        lg: "h-10 px-6",
-        icon: "h-9 w-9",
+        icon: "h-8 w-8",
       },
     },
     defaultVariants: {
@@ -44,10 +39,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : "button"
     return (
       <Comp
-        className={cn(
-          buttonVariants({ variant, size }),
-          className
-        )}
+        className={cn(buttonVariants({ variant, size }), className)}
         ref={ref}
         {...props}
       />

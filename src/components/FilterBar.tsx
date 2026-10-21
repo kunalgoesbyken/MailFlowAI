@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback } from 'react';
 import type { FilterState, SortOrder } from '@/types/email';
 import { SearchInput } from '@/components/filter/SearchInput';
 import { UnreadFilterButton } from '@/components/filter/UnreadFilterButton';
@@ -13,26 +13,16 @@ interface FilterBarProps {
 }
 
 export function FilterBar({ filters, onFiltersChange, sortOrder, onSortChange }: FilterBarProps) {
-  const filtersRef = useRef(filters);
-  useEffect(() => {
-    filtersRef.current = filters;
-  }, [filters]);
-
   const toggleUnread = useCallback(() => {
-    onFiltersChange({
-      ...filtersRef.current,
-      isUnread: filtersRef.current.isUnread === undefined ? true : undefined,
-    });
-  }, [onFiltersChange]);
+    onFiltersChange({ ...filters, isUnread: filters.isUnread ? undefined : true });
+  }, [filters, onFiltersChange]);
 
   return (
-    <div className="px-4 py-3">
-      <div className="flex items-center gap-2.5">
-        <SearchInput filters={filters} onFiltersChange={onFiltersChange} />
-        <UnreadFilterButton isUnread={filters.isUnread} onToggle={toggleUnread} />
-        <AdvancedFilterPopover filters={filters} onFiltersChange={onFiltersChange} />
-        <SortButton sortOrder={sortOrder} onSortChange={onSortChange} />
-      </div>
+    <div className="flex items-center gap-2">
+      <SearchInput filters={filters} onFiltersChange={onFiltersChange} />
+      <UnreadFilterButton isUnread={filters.isUnread} onToggle={toggleUnread} />
+      <AdvancedFilterPopover filters={filters} onFiltersChange={onFiltersChange} />
+      <SortButton sortOrder={sortOrder} onSortChange={onSortChange} />
     </div>
   );
 }

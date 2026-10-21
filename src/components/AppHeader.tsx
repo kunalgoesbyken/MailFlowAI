@@ -1,4 +1,4 @@
-import { Moon, Sun, RefreshCw, Mail } from 'lucide-react';
+import { Moon, Sun, RefreshCw, Sparkles } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import type { ViewType, FilterState, SortOrder } from '@/types/email';
@@ -7,6 +7,7 @@ import { FilterBar } from '@/components/FilterBar';
 
 interface AppHeaderProps {
   currentView: ViewType;
+  onViewChange: (view: ViewType) => void;
   isCopilotOpen: boolean;
   isSyncing: boolean;
   onToggleCopilot: () => void;
@@ -17,8 +18,12 @@ interface AppHeaderProps {
   onSortChange: (order: SortOrder) => void;
 }
 
+const MOBILE_VIEWS: ViewType[] = ['inbox', 'sent'];
+
 export function AppHeader({
-  isCopilotOpen: _copilot,
+  currentView,
+  onViewChange,
+  isCopilotOpen,
   isSyncing,
   onToggleCopilot,
   onSync,
@@ -29,56 +34,53 @@ export function AppHeader({
 }: AppHeaderProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+
   return (
-    <header className="border-b border-neutral-200 dark:border-neutral-800 relative z-20 bg-white dark:bg-neutral-950">
-      <div className="flex items-center px-4 lg:px-5 py-2.5 gap-3 lg:gap-4">
-        <div className="flex-1 min-w-0">
-          <FilterBar
-            filters={filters}
-            onFiltersChange={onFiltersChange}
-            sortOrder={sortOrder}
-            onSortChange={onSortChange}
-          />
-        </div>
-
-        <div className="flex items-center gap-0.5 shrink-0">
+    <header className="flex items-center gap-2 border-b border-neutral-200 bg-white px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950">
+      <div className="flex gap-1 lg:hidden">
+        {MOBILE_VIEWS.map((view) => (
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={onSync}
-            disabled={isSyncing}
-            aria-label="Sync emails"
-            className="h-8 w-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900"
+            key={view}
+            variant={currentView === view ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onViewChange(view)}
+            className="capitalize"
           >
-            <RefreshCw className={cn(
-              "w-4 h-4",
-              isSyncing && "animate-spin"
-            )} />
+            {view}
           </Button>
-
-          <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-800 mx-0.5" />
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleCopilot}
-            aria-label="Toggle AI Assistant"
-            className="h-8 w-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900"
-          >
-            <Mail className="w-4 h-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="h-8 w-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900"
-          >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </Button>
-        </div>
+        ))}
       </div>
+
+      <div className="min-w-0 flex-1">
+        <FilterBar
+          filters={filters}
+          onFiltersChange={onFiltersChange}
+          sortOrder={sortOrder}
+          onSortChange={onSortChange}
+        />
+      </div>
+
+      <Button variant="ghost" size="icon" onClick={onSync} disabled={isSyncing} aria-label="Refresh">
+        <RefreshCw className={cn(isSyncing && 'animate-spin')} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onToggleCopilot}
+        aria-label="Toggle assistant"
+        aria-pressed={isCopilotOpen}
+        className={cn(isCopilotOpen && 'bg-neutral-100 dark:bg-neutral-800')}
+      >
+        <Sparkles />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setTheme(isDark ? 'light' : 'dark')}
+        aria-label="Toggle theme"
+      >
+        {isDark ? <Sun /> : <Moon />}
+      </Button>
     </header>
   );
 }

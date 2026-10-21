@@ -1,62 +1,69 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { Email } from '@/types/email';
 
-interface UseKeyboardShortcutsOptions {
+interface KeyboardShortcutHandlers {
   emails: Email[];
   selectedEmailId: string | null;
   onSelectEmail: (email: Email) => void;
+  onBack: () => void;
+  onCompose: () => void;
+  onReply: (emailId: string) => void;
+  onForward: (emailId: string) => void;
   onStar: (emailId: string) => void;
   onArchive: (emailId: string) => void;
   onDelete: (emailId: string) => void;
+  onMarkUnread: (emailId: string) => void;
 }
 
-export function useKeyboardShortcuts({
-  emails,
-  selectedEmailId,
-  onSelectEmail,
-  onStar,
-  onArchive,
-  onDelete,
-}: UseKeyboardShortcutsOptions) {
+const isTypingTarget = (target: EventTarget | null) => {
+  const el = target as HTMLElement | null;
+  return !!el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable);
+};
+
+export function useKeyboardShortcuts(handlers: KeyboardShortcutHandlers) {
+  const handlersRef = useRef(handlers);
+  handlersRef.current = handlers;
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-        return;
-      }
+      if (isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
 
-      const tag = e.key;
+      const { emails, selectedEmailId, onSelectEmail, onBack, onCompose, onReply, onForward, onStar, onArchive, onDelete, onMarkUnread } =
+        handlersRef.current;
 
-      if (tag === 'j' || tag === 'k') {
-        e.preventDefault();
-        if (emails.length === 0) return;
-        const currentIndex = selectedEmailId
-          ? emails.findIndex((em) => em.id === selectedEmailId)
-          : -1;
-        const nextIndex = tag === 'j'
-          ? Math.min(currentIndex + 1, emails.length - 1)
-          : Math.max(currentIndex - 1, 0);
-        if (nextIndex >= 0 && nextIndex < emails.length) {
-          onSelectEmail(emails[nextIndex]);
-        }
-        return;
-      }
+      const moveSelection = (step: 1 | -1) => {
+        const current = emails.findIndex((email) => email.id === selectedEmailId);
+        const next = emails[Math.min(Math.max(current + step, 0), emails.length - 1)];
+        if (next) onSelectEmail(next);
+      };
 
-      if (!selectedEmailId) return;
+      const withSelected = (action: (id: string) => void, closeAfter = false) => {
+        if (!selectedEmailId) return;
+        action(selectedEmailId);
+        if (closeAfter) onBack();
+      };
 
-      if (tag === 'e') {
-        e.preventDefault();
-        onArchive(selectedEmailId);
-      } else if (tag === 's') {
-        e.preventDefault();
-        onStar(selectedEmailId);
-      } else if (tag === '#') {
-        e.preventDefault();
-        onDelete(selectedEmailId);
-      }
+      const actions: Record<string, () => void> = {
+        j: () => moveSelection(1),
+        k: () => moveSelection(-1),
+        c: onCompose,
+        '/': () => document.getElementById('search-input')?.focus(),
+        Escape: onBack,
+        r: () => withSelected(onReply),
+        f: () => withSelected(onForward),
+        s: () => withSelected(onStar),
+        e: () => withSelected(onArchive, true),
+        '#': () => withSelected(onDelete, true),
+        u: () => withSelected(onMarkUnread, true),
+      };
+
+      const action = actions[e.key];
+      if (!action) return;
+      e.preventDefault();
+      action();
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [emails, selectedEmailId, onSelectEmail, onStar, onArchive, onDelete]);
+  }, []);
 }

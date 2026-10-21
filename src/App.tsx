@@ -34,6 +34,7 @@ function AppContent() {
     search,
     sortOrder,
     setSortOrder,
+    setFilters,
   } = useAppStore();
 
   const {
@@ -43,7 +44,7 @@ function AppContent() {
     starEmail,
     archiveEmail,
     deleteEmail,
-    isLoading,
+    markAsRead,
     pagination,
     loadMore,
   } = useEmails();
@@ -63,8 +64,6 @@ function AppContent() {
 
   const [showSendConfirm, setShowSendConfirm] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<EmailConfirmData | null>(null);
-
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const composeInitialData = useMemo(() => ({
     to: compose.to,
@@ -101,7 +100,6 @@ function AppContent() {
         await fetchSent();
       }
     } finally {
-      await new Promise(resolve => setTimeout(resolve, 500));
       setIsSyncing(false);
     }
   }, [currentView, fetchInbox, fetchSent]);
@@ -191,15 +189,6 @@ function AppContent() {
     }
   }, [currentEmailList, sortOrder]);
 
-  useKeyboardShortcuts({
-    emails: sortedEmailList,
-    selectedEmailId,
-    onSelectEmail: handleSelectEmail,
-    onStar: starEmail,
-    onArchive: archiveEmail,
-    onDelete: deleteEmail,
-  });
-
   const getCurrentPagination = useCallback(() => {
     if (currentView === 'inbox') return pagination.inbox;
     if (currentView === 'sent') return pagination.sent;
@@ -247,11 +236,28 @@ function AppContent() {
     setCompose({ ...compose, isSending: false });
   }, [showSendConfirm, pendingEmail, compose, setCompose]);
 
-  const handleBackToList = useCallback(() => {
-    setIsTransitioning(true);
-    setSelectedEmailId(null);
-    setTimeout(() => setIsTransitioning(false), 150);
-  }, [setSelectedEmailId]);
+  const handleBackToList = useCallback(() => setSelectedEmailId(null), [setSelectedEmailId]);
+
+  const handleMarkUnread = useCallback((emailId: string) => markAsRead(emailId, false), [markAsRead]);
+
+  const handleToggleRead = useCallback(
+    (emailId: string, isUnread: boolean) => markAsRead(emailId, isUnread),
+    [markAsRead]
+  );
+
+  useKeyboardShortcuts({
+    emails: sortedEmailList,
+    selectedEmailId,
+    onSelectEmail: handleSelectEmail,
+    onBack: handleBackToList,
+    onCompose: handleCompose,
+    onReply: handleReply,
+    onForward: handleForward,
+    onStar: starEmail,
+    onArchive: archiveEmail,
+    onDelete: deleteEmail,
+    onMarkUnread: handleMarkUnread,
+  });
 
   const unreadCount = emails.inbox.filter((e: Email) => e.isUnread).length;
 
@@ -269,94 +275,83 @@ function AppContent() {
   }
 
   return (
-    <>
-      <div className="flex h-screen overflow-hidden bg-neutral-50 dark:bg-neutral-950">
-        <Sidebar
+    <div className="flex h-dvh overflow-hidden bg-neutral-50 dark:bg-neutral-950">
+      <Sidebar
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        onCompose={handleCompose}
+        unreadCount={unreadCount}
+        isAuthenticated={isAuthenticated}
+      />
+
+      <main
+        id="main-content"
+        className={cn('flex min-w-0 flex-1 flex-col overflow-hidden', isCopilotOpen && 'lg:mr-[var(--copilot-width)]')}
+        style={{ '--copilot-width': `${copilotWidth}px` } as React.CSSProperties}
+      >
+        <AppHeader
           currentView={currentView}
           onViewChange={setCurrentView}
-          onCompose={handleCompose}
-          unreadCount={unreadCount}
-          isLoading={isLoading}
-          onRefresh={sync}
-          isAuthenticated={isAuthenticated}
+          isCopilotOpen={isCopilotOpen}
+          isSyncing={isSyncing}
+          onToggleCopilot={() => setIsCopilotOpen((open) => !open)}
+          onSync={sync}
+          filters={currentFilters}
+          onFiltersChange={setFilters}
+          sortOrder={sortOrder}
+          onSortChange={setSortOrder}
         />
 
-        <main
-          id="main-content"
-          className={cn(
-            "flex-1 flex flex-col overflow-hidden relative",
-            isCopilotOpen && 'lg:mr-[var(--copilot-width)]'
-          )}
-          style={{ '--copilot-width': `${copilotWidth}px` } as React.CSSProperties}
-        >
-          <AppHeader
-            currentView={currentView}
-            isCopilotOpen={isCopilotOpen}
-            isSyncing={isSyncing}
-            onToggleCopilot={() => setIsCopilotOpen(!isCopilotOpen)}
-            onSync={sync}
-            filters={currentFilters}
-            onFiltersChange={useAppStore.getState().setFilters}
-            sortOrder={sortOrder}
-            onSortChange={setSortOrder}
-          />
+        <div className="min-h-0 flex-1 bg-white dark:bg-neutral-950">
+          <InlineErrorBoundary componentName="EmailDetail">
+            {selectedEmail ? (
+              <EmailDetail
+                email={selectedEmail}
+                onBack={handleBackToList}
+                onReply={handleReply}
+                onForward={handleForward}
+              />
+            ) : (
+              <EmailList
+                emails={sortedEmailList}
+                selectedId={selectedEmailId}
+                onSelectEmail={handleSelectEmail}
+                onStar={starEmail}
+                onArchive={archiveEmail}
+                onDelete={deleteEmail}
+                onToggleRead={handleToggleRead}
+                pagination={getCurrentPagination()}
+                onLoadMore={handleLoadMore}
+              />
+            )}
+          </InlineErrorBoundary>
+        </div>
+      </main>
 
-          <div className="flex-1 flex overflow-hidden relative">
-            <InlineErrorBoundary componentName="EmailDetail">
-              <div className={cn(
-                "flex-1 w-full transition-all duration-300 ease-in-out",
-                isTransitioning && "opacity-95"
-              )}>
-                {selectedEmail ? (
-                  <div className="h-full animate-fade-in-right">
-                    <EmailDetail
-                      email={selectedEmail}
-                      onBack={handleBackToList}
-                      onReply={handleReply}
-                      onForward={handleForward}
-                    />
-                  </div>
-                ) : (
-                  <div className="h-full animate-fade-in">
-                    <EmailList
-                      emails={sortedEmailList}
-                      selectedId={selectedEmailId}
-                      onSelectEmail={handleSelectEmail}
-                      pagination={getCurrentPagination()}
-                      onLoadMore={handleLoadMore}
-                    />
-                  </div>
-                )}
-              </div>
-            </InlineErrorBoundary>
-          </div>
-        </main>
-
-        <InlineErrorBoundary componentName="CopilotSidebar">
-          <CopilotSidebar
-            isOpen={isCopilotOpen}
-            onClose={() => setIsCopilotOpen(false)}
-            width={copilotWidth}
-            onWidthChange={setCopilotWidth}
-          />
-        </InlineErrorBoundary>
-
-        <Compose
-          isOpen={compose.isOpen}
-          onClose={handleCloseCompose}
-          onSend={handleSendEmail}
-          initialData={composeInitialData}
+      <InlineErrorBoundary componentName="CopilotSidebar">
+        <CopilotSidebar
+          isOpen={isCopilotOpen}
+          onClose={() => setIsCopilotOpen(false)}
+          width={copilotWidth}
+          onWidthChange={setCopilotWidth}
         />
+      </InlineErrorBoundary>
 
-        <SendConfirmDialog
-          isOpen={showSendConfirm}
-          emailData={pendingEmail || { to: '', subject: '', body: '' }}
-          onConfirm={handleConfirmSend}
-          onCancel={handleCancelSend}
-          isSending={compose.isSending}
-        />
-      </div>
-    </>
+      <Compose
+        isOpen={compose.isOpen}
+        onClose={handleCloseCompose}
+        onSend={handleSendEmail}
+        initialData={composeInitialData}
+      />
+
+      <SendConfirmDialog
+        isOpen={showSendConfirm}
+        emailData={pendingEmail || { to: '', subject: '', body: '' }}
+        onConfirm={handleConfirmSend}
+        onCancel={handleCancelSend}
+        isSending={compose.isSending}
+      />
+    </div>
   );
 }
 
