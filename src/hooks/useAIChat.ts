@@ -1,12 +1,10 @@
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import { DefaultChatTransport, isToolUIPart, type UIDataTypes, type UIMessage } from 'ai';
 import { useAppStore } from '@/store';
-import { useMemo, useEffect, useRef } from 'react';
+import { useMemo } from 'react';
+import type { ChatUITools } from '@/lib/chat-tools';
 
-interface ToolResult {
-  action: string;
-  [key: string]: unknown;
-}
+type ChatUIMessage = UIMessage<unknown, UIDataTypes, ChatUITools>;
 
 export function useAIChat() {
   const {
@@ -20,8 +18,6 @@ export function useAIChat() {
     setCurrentView,
     setCompose,
   } = useAppStore();
-
-  const processedActions = useRef(new Set<string>());
 
   const context = useMemo(() => ({
     currentView,
@@ -53,108 +49,47 @@ export function useAIChat() {
     compose.isOpen,
   ]);
 
-  const handleActionResult = (result: ToolResult) => {
-    switch (result.action) {
-      case 'openEmail':
-        if (typeof result.emailId === 'string') {
-          setSelectedEmailId(result.emailId);
-        }
+  const openDraft = (to: string, subject: string, body: string) =>
+    setCompose({
+      isOpen: true,
+      to,
+      subject,
+      body,
+      cc: '',
+      bcc: '',
+      isSending: false,
+      isAIComposed: true,
+    });
+
+  const runToolCall = (part: ChatUIMessage['parts'][number]) => {
+    if (!isToolUIPart(part) || part.state !== 'output-available') return;
+
+    switch (part.type) {
+      case 'tool-openEmail':
+        setSelectedEmailId(part.input.emailId);
         break;
-      case 'navigateView':
-        if (typeof result.view === 'string') {
-          setCurrentView(result.view as 'inbox' | 'sent' | 'drafts');
-        }
+      case 'tool-navigateView':
+        setCurrentView(part.input.view);
         break;
-      case 'composeEmail':
-        setCompose({
-          isOpen: true,
-          to: (result.to as string) || '',
-          subject: (result.subject as string) || '',
-          body: (result.body as string) || '',
-          cc: '',
-          bcc: '',
-          isSending: false,
-          isAIComposed: true,
-        });
+      case 'tool-composeEmail':
+        openDraft(part.input.to, part.input.subject, part.input.body);
         break;
-      case 'replyToEmail':
-        if (typeof result.emailId === 'string') {
-          setSelectedEmailId(result.emailId);
-          setCompose({
-            isOpen: true,
-            to: '',
-            subject: '',
-            body: (result.body as string) || '',
-            cc: '',
-            bcc: '',
-            isSending: false,
-            isAIComposed: true,
-          });
-        }
+      case 'tool-replyToEmail':
+        setSelectedEmailId(part.input.emailId);
+        openDraft('', '', part.input.body);
         break;
     }
   };
 
-  const extractActions = (text: string): string[] => {
-    const matches: string[] = [];
-    const regex = /<action>(.*?)<\/action>/gs;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      matches.push(match[1]);
-    }
-    return matches;
-  };
-
-  const chat = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-    }),
+  const chat = useChat<ChatUIMessage>({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
     onFinish: ({ message }) => {
-      if (!message?.parts) return;
-
-      for (const part of message.parts) {
-        if (part.type !== 'text') continue;
-
-        const text = (part as { text?: string }).text;
-        if (!text) continue;
-
-        const actionJsons = extractActions(text);
-        for (const json of actionJsons) {
-          try {
-            const result = JSON.parse(json) as ToolResult;
-            if (result.action) {
-              const dedupeKey = `${result.action}-${JSON.stringify(result)}`;
-              if (processedActions.current.has(dedupeKey)) continue;
-              processedActions.current.add(dedupeKey);
-              handleActionResult(result);
-            }
-          } catch {
-            // skip malformed JSON
-          }
-        }
-      }
-    },
-    onError: (error) => {
-      console.error('Chat error:', error);
+      message.parts.forEach(runToolCall);
     },
   });
 
-  // Clean up when messages reset
-  useEffect(() => {
-    if (chat.messages.length === 0) {
-      processedActions.current.clear();
-    }
-  }, [chat.messages.length]);
-
-  // Wrap sendMessage to include context
-  const sendMessageWithContext = (text: string) => {
-    return chat.sendMessage(
-      { text },
-      {
-        body: { context },
-      }
-    );
-  };
+  const sendMessageWithContext = (text: string) =>
+    chat.sendMessage({ text }, { body: { context } });
 
   return {
     ...chat,
