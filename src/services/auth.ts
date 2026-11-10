@@ -12,7 +12,6 @@ import {
  */
 export interface OAuthConfig {
   clientId: string;
-  clientSecret: string;
   redirectUri: string;
 }
 
@@ -22,7 +21,6 @@ export interface OAuthConfig {
 export function getOAuthConfig(): OAuthConfig {
   return {
     clientId: process.env.NEXT_PUBLIC_GMAIL_CLIENT_ID || '',
-    clientSecret: process.env.NEXT_PUBLIC_GMAIL_CLIENT_SECRET || '',
     redirectUri: process.env.NEXT_PUBLIC_GMAIL_REDIRECT_URI ||
       `${window.location.origin}/auth/callback`,
   };
@@ -107,12 +105,7 @@ export async function refreshAccessToken(): Promise<string> {
     throw new Error('No refresh token available');
   }
 
-  const config = getOAuthConfig();
-  const tokens = await GmailService.refreshToken(
-    refreshToken,
-    config.clientId,
-    config.clientSecret
-  );
+  const tokens = await GmailService.refreshToken(refreshToken);
 
   storeToken('access', tokens.access_token);
   // Gmail API replaces refresh token sometimes, but if not we keep the old one.

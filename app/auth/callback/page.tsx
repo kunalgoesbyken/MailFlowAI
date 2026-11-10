@@ -90,7 +90,7 @@ function AuthCallbackContent() {
 
         const config = getOAuthConfig();
 
-        if (!config.clientId || !config.clientSecret) {
+        if (!config.clientId) {
           setError({
             code: 'config_error',
             message: 'OAuth configuration is missing. Please check your environment variables.',
@@ -99,7 +99,7 @@ function AuthCallbackContent() {
           return;
         }
 
-        const tokens = await exchangeCodeForToken(code, config.clientId, config.clientSecret, config.redirectUri);
+        const tokens = await exchangeCodeForToken(code, config.redirectUri);
 
         storeToken('access', tokens.access_token);
         setAccessToken(tokens.access_token);

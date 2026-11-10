@@ -74,14 +74,16 @@ Configure your `.env` with the following variables:
 ```env
 # Google OAuth Configuration
 NEXT_PUBLIC_GMAIL_CLIENT_ID=your-client-id.apps.googleusercontent.com
-NEXT_PUBLIC_GMAIL_CLIENT_SECRET=your-client-secret
 NEXT_PUBLIC_GMAIL_REDIRECT_URI=http://localhost:3000/auth/callback
+
+# Google OAuth client secret (server-side only)
+GMAIL_CLIENT_SECRET=your-client-secret
 
 # Groq AI API Key (server-side only)
 GROQ_API_KEY=your-groq-api-key
 ```
 
-`NEXT_PUBLIC_*` variables are inlined into the browser bundle, so the OAuth client secret is visible to the client. `NEXT_PUBLIC_GMAIL_REDIRECT_URI` falls back to `<origin>/auth/callback` when unset. `GROQ_API_KEY` is only read by the `/api/chat` route handler.
+`NEXT_PUBLIC_*` variables are inlined into the browser bundle, so only the client ID and redirect URI use that prefix. `GMAIL_CLIENT_SECRET` is only read by the `/api/auth/token` route handler, which performs the code exchange and token refresh on the server. `NEXT_PUBLIC_GMAIL_REDIRECT_URI` falls back to `<origin>/auth/callback` when unset. `GROQ_API_KEY` is only read by the `/api/chat` route handler.
 
 ### 2. Run Locally
 

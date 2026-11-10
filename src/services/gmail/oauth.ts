@@ -24,70 +24,43 @@ export function getAuthUrl(
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
 
-/**
- * Exchange authorization code for access token
- */
-export async function exchangeCodeForToken(
-  code: string,
-  clientId: string,
-  clientSecret: string,
-  redirectUri: string
-): Promise<{
+type TokenResponse = {
   access_token: string;
   refresh_token?: string;
   expires_in: number;
-}> {
-  const response = await fetch('https://oauth2.googleapis.com/token', {
+};
+
+async function requestTokens(
+  body: Record<string, string>,
+  failure: string
+): Promise<TokenResponse> {
+  const response = await fetch('/api/auth/token', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      code,
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: redirectUri,
-      grant_type: 'authorization_code',
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Token exchange failed: ${error}`);
+    throw new Error(`${failure}: ${error}`);
   }
 
   return response.json();
 }
 
-/**
- * Refresh the access token
- */
-export async function refreshToken(
-  refreshToken: string,
-  clientId: string,
-  clientSecret: string
-): Promise<{
-  access_token: string;
-  refresh_token?: string;
-  expires_in: number;
-}> {
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      refresh_token: refreshToken,
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: 'refresh_token',
-    }),
-  });
+export function exchangeCodeForToken(
+  code: string,
+  redirectUri: string
+): Promise<TokenResponse> {
+  return requestTokens(
+    { grant_type: 'authorization_code', code, redirect_uri: redirectUri },
+    'Token exchange failed'
+  );
+}
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Token refresh failed: ${error}`);
-  }
-
-  return response.json();
+export function refreshToken(refreshToken: string): Promise<TokenResponse> {
+  return requestTokens(
+    { grant_type: 'refresh_token', refresh_token: refreshToken },
+    'Token refresh failed'
+  );
 }
