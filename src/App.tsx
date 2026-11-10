@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState, useMemo } from 'react';
+import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { useAppStore } from '@/store';
 import { useEmails } from '@/hooks/useEmails';
 import { useBootstrapAuthAndInbox } from '@/hooks/useBootstrapAuthAndInbox';
@@ -75,21 +75,24 @@ function AppContent() {
     isAIComposed: compose.isAIComposed,
   }), [compose.to, compose.subject, compose.body, compose.cc, compose.bcc, compose.isSending, compose.isAIComposed]);
 
+  const fetchers = useRef({ fetchInbox, fetchSent });
+  fetchers.current = { fetchInbox, fetchSent };
+
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    fetchInbox();
+    fetchers.current.fetchInbox();
 
     const interval = setInterval(() => {
       if (currentView === 'inbox') {
-        fetchInbox();
+        fetchers.current.fetchInbox();
       } else if (currentView === 'sent') {
-        fetchSent();
+        fetchers.current.fetchSent();
       }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, currentView, fetchInbox, fetchSent]);
+  }, [isAuthenticated, currentView]);
 
   const sync = useCallback(async () => {
     setIsSyncing(true);
